@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Book Analyzer</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f4ef;
+    --surface: #ffffff;
+    --border: #e2ddd5;
+    --ink: #1a1714;
+    --muted: #7a7268;
+    --accent: #2d4a3e;
+    --accent-light: #e8f0ec;
+    --accent-muted: #4a7a65;
+    --danger: #c0392b;
+    --tag-bg: #eee9e1;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+
+  header {
+    max-width: 760px;
+    margin: 0 auto 2.5rem;
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    border-bottom: 1.5px solid var(--border);
+    padding-bottom: 1rem;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+
+  header span {
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.75rem;
+    max-width: 760px;
+    margin: 0 auto 1.5rem;
+  }
+
+  .card label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 140px;
+    resize: vertical;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.65;
+    color: var(--ink);
+    background: var(--bg);
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  textarea:focus {
+    border-color: var(--accent-muted);
+  }
+
+  textarea::placeholder { color: var(--muted); opacity: 0.7; }
+
+  .row {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    align-items: center;
+  }
+
+  button#analyzeBtn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.7rem 1.6rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  button#analyzeBtn:hover { background: #1e3329; }
+  button#analyzeBtn:active { transform: scale(0.98); }
+  button#analyzeBtn:disabled { background: var(--muted); cursor: not-allowed; }
+
+  button#clearBtn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 0.7rem 1.1rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  button#clearBtn:hover { border-color: var(--accent-muted); color: var(--accent); }
+
+  .spinner {
+    display: none;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #error {
+    display: none;
+    background: #fdf2f2;
+    border: 1px solid #f0baba;
+    color: var(--danger);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    max-width: 760px;
+    margin: 0 auto 1.5rem;
+  }
+
+  #resultCard {
+    display: none;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+
+  .result-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+
+  .copy-btn {
+    background: var(--accent-light);
+    border: none;
+    color: var(--accent);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.4rem 0.9rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .copy-btn:hover { background: #d4e6dc; }
+
+  .sections-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .section {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+  }
+
+  .section.full { grid-column: 1 / -1; }
+
+  .section-title {
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-muted);
+    margin-bottom: 0.6rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-body {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--ink);
+    white-space: pre-wrap;
+  }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.3rem 1.5rem;
+  }
+
+  .meta-row {
+    display: flex;
+    gap: 0.4rem;
+    font-size: 0.87rem;
+    line-height: 1.6;
+  }
+
+  .meta-key {
+    color: var(--muted);
+    white-space: nowrap;
+    min-width: 110px;
+    font-weight: 400;
+  }
+
+  .meta-val { color: var(--ink); font-weight: 400; }
+
+  .raw-pre {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    color: var(--ink);
+    overflow-x: auto;
+  }
+
+  @media (max-width: 580px) {
+    .sections-grid { grid-template-columns: 1fr; }
+    .meta-grid { grid-template-columns: 1fr; }
+    .section.full { grid-column: 1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Book Analyzer</h1>
+  <span>Powered by Mistral AI</span>
+</header>
+
+<div class="card">
+  <label for="inputText">Paste a paragraph about a book</label>
+  <textarea id="inputText" placeholder="e.g. 'To Kill a Mockingbird by Harper Lee is a 1960 novel set in the American South during the 1930s. It follows young Scout Finch as her father, lawyer Atticus Finch, defends a Black man falsely accused of raping a white woman...'"></textarea>
+  <div class="row">
+    <button id="analyzeBtn" onclick="analyze()">
+      <div class="spinner" id="spinner"></div>
+      <span id="btnText">Analyze</span>
+    </button>
+    <button id="clearBtn" onclick="clearAll()">Clear</button>
+  </div>
+</div>
+
+<div id="error"></div>
+
+<div id="resultCard" class="card">
+  <div class="result-header">
+    <h2>Analysis Result</h2>
+    <button class="copy-btn" onclick="copyResult()">Copy raw text</button>
+  </div>
+  <div id="parsedView"></div>
+</div>
+
+<script>
+let rawResult = "";
+
+async function analyze() {
+  const text = document.getElementById("inputText").value.trim();
+  if (!text) { showError("Please enter a paragraph to analyze."); return; }
+
+  setLoading(true);
+  hideError();
+  document.getElementById("resultCard").style.display = "none";
+
+  try {
+    const res = await fetch("/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
+    });
+    const data = await res.json();
+    if (data.error) { showError(data.error); return; }
+    rawResult = data.result;
+    renderResult(rawResult);
+  } catch (e) {
+    showError("Could not connect to the server. Make sure app.py is running on port 5000.");
+  } finally {
+    setLoading(false);
+  }
+}
+
+function renderResult(text) {
+  const parsed = document.getElementById("parsedView");
+
+  // Extract sections from the model output
+  const get = (label) => {
+    const re = new RegExp(`${label}:\\s*(.+?)(?=\\n[A-Z][^:]*:|\\n-{5,}|$)`, "s");
+    const m = text.match(re);
+    return m ? m[1].trim() : "";
+  };
+
+  const metaFields = [
+    ["Title", get("Title")], ["Author", get("Author")],
+    ["Genre", get("Genre")], ["Sub-Genre", get("Sub-Genre")],
+    ["Publication Year", get("Publication Year")], ["Publisher", get("Publisher")],
+    ["Language", get("Language")], ["Pages", get("Pages")],
+    ["Series", get("Series \\(if any\\)")],
+  ];
+
+  const descFields = [
+    ["Main Characters", get("Main Characters")],
+    ["Setting", get("Setting \\(Time & Place\\)")],
+    ["Themes", get("Themes")],
+    ["Keywords", get("Keywords")],
+    ["Writing Style", get("Writing Style")],
+    ["Tone", get("Tone")],
+    ["Target Audience", get("Target Audience")],
+    ["Notable Awards", get("Notable Awards \\(if any\\)")],
+  ];
+
+  const shortSummaryMatch = text.match(/Short Summary \(2.3 lines\):\s*([\s\S]*?)(?=\n-{5,})/);
+  const shortSummary = shortSummaryMatch ? shortSummaryMatch[1].trim() : "";
+
+  const detailedSummaryMatch = text.match(/Detailed Summary \(5.8 lines\):\s*([\s\S]*?)(?=\n-{5,})/);
+  const detailedSummary = detailedSummaryMatch ? detailedSummaryMatch[1].trim() : "";
+
+  const keyTakeawaysMatch = text.match(/Key Takeaways:\s*([\s\S]*?)(?=\n-{5,}|$)/);
+  const keyTakeaways = keyTakeawaysMatch ? keyTakeawaysMatch[1].trim() : "";
+
+  const metaRows = metaFields.filter(([, v]) => v)
+    .map(([k, v]) => `<div class="meta-row"><span class="meta-key">${k}</span><span class="meta-val">${esc(v)}</span></div>`).join("");
+
+  const descRows = descFields.filter(([, v]) => v)
+    .map(([k, v]) => `<div class="meta-row"><span class="meta-key">${k}</span><span class="meta-val">${esc(v)}</span></div>`).join("");
+
+  // Fallback: if parsing fails, show raw
+  const hasContent = metaRows || shortSummary || detailedSummary;
+
+  if (!hasContent) {
+    parsed.innerHTML = `<pre class="raw-pre">${esc(text)}</pre>`;
+  } else {
+    parsed.innerHTML = `
+      <div class="sections-grid">
+        ${metaRows ? `<div class="section full">
+          <div class="section-title">Book Details</div>
+          <div class="meta-grid">${metaRows}</div>
+        </div>` : ""}
+        ${descRows ? `<div class="section full">
+          <div class="section-title">Description</div>
+          <div class="meta-grid">${descRows}</div>
+        </div>` : ""}
+        ${shortSummary ? `<div class="section">
+          <div class="section-title">Short Summary</div>
+          <div class="section-body">${esc(shortSummary)}</div>
+        </div>` : ""}
+        ${keyTakeaways ? `<div class="section">
+          <div class="section-title">Key Takeaways</div>
+          <div class="section-body">${esc(keyTakeaways)}</div>
+        </div>` : ""}
+        ${detailedSummary ? `<div class="section full">
+          <div class="section-title">Detailed Summary</div>
+          <div class="section-body">${esc(detailedSummary)}</div>
+        </div>` : ""}
+      </div>
+    `;
+  }
+
+  document.getElementById("resultCard").style.display = "block";
+  document.getElementById("resultCard").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function esc(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function copyResult() {
+  navigator.clipboard.writeText(rawResult).then(() => {
+    const btn = document.querySelector(".copy-btn");
+    btn.textContent = "Copied!";
+    setTimeout(() => btn.textContent = "Copy raw text", 1800);
+  });
+}
+
+function clearAll() {
+  document.getElementById("inputText").value = "";
+  document.getElementById("resultCard").style.display = "none";
+  hideError();
+  rawResult = "";
+}
+
+function setLoading(on) {
+  document.getElementById("spinner").style.display = on ? "block" : "none";
+  document.getElementById("btnText").textContent = on ? "Analyzing…" : "Analyze";
+  document.getElementById("analyzeBtn").disabled = on;
+}
+
+function showError(msg) {
+  const el = document.getElementById("error");
+  el.textContent = msg;
+  el.style.display = "block";
+}
+
+function hideError() {
+  document.getElementById("error").style.display = "none";
+}
+
+document.getElementById("inputText").addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") analyze();
+});
+</script>
+</body>
+</html>

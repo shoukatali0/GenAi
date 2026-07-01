@@ -1,0 +1,44 @@
+---
+tags: [genai/part1, genai/rag, genai/embeddings]
+status: not-started
+---
+
+# 03 — Embeddings & Vector Databases
+
+⬅ [[00-START-HERE]]
+
+## Why this matters
+Embeddings are the foundation every RAG system is built on. "How do I return an item?" and "What's your refund policy?" land close together in vector space despite sharing no keywords — that's the entire trick that makes semantic search possible.
+
+## Core Concepts (read once)
+- **Embeddings** — a model converts text into a fixed-length vector of numbers capturing semantic meaning. Similar meaning → vectors close together in that space.
+- **Similarity metrics** — cosine similarity is the default for text embeddings; dot product and Euclidean exist but cosine is what you'll use 95% of the time.
+- **Chunking strategy** — you can't embed a whole document as one vector and expect good retrieval. Fixed-size chunking (e.g. 500 tokens, 50 overlap) is the baseline; semantic/recursive chunking (split on natural boundaries — paragraphs, headers) is better but more work. Chunk size is one of the highest-leverage tuning knobs in RAG.
+- **Vector databases** — purpose-built for fast similarity search at scale (you can't linear-scan millions of vectors).
+  - **Chroma** — simplest, great for local dev/prototyping
+  - **FAISS** — Meta's library, fast, in-process, no server needed
+  - **Qdrant** — production-grade, filtering + hybrid search support, can self-host
+  - **Pinecone** — managed/hosted, zero ops, costs money at scale
+- **Metadata filtering** — store metadata (date, source, tags) alongside vectors so you can filter *before or after* the similarity search (e.g. "only search docs tagged #docker").
+
+## Project: Semantic Search Engine for Your Own Notes
+Use **real data you already have** — your Notion learning notes or this very Obsidian vault once it has content.
+
+**Requirements:**
+- Ingest pipeline: read your markdown/Notion notes → chunk them → embed each chunk → store in Chroma (local, no server hassle)
+- Query CLI or simple script: takes a natural-language query, returns top-k most relevant chunks with their source file
+- Add metadata (filename, tags, date) and support filtering by it
+
+**Stretch goal:** Add a second vector DB (Qdrant, running in Docker — you already know Docker) and benchmark query speed/quality against Chroma. This sets you up to make an informed choice in later RAG work instead of defaulting blindly.
+
+**Stack:** Python, `chromadb`, an embeddings model (OpenAI `text-embedding-3-small` or a local one via `sentence-transformers`), Qdrant (stretch, via Docker)
+
+## Resources
+- Chroma docs (quickstart)
+- Qdrant docs
+- `sentence-transformers` (for local/free embeddings)
+
+## Status
+- [ ] Core concepts reviewed
+- [ ] Project built and working
+- [ ] Pushed to GitHub with README
